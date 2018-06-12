@@ -14,6 +14,8 @@ from sklearn.preprocessing import StandardScaler
 from data_globals import APPLICATION_CAT, APPLICATION_CONT
 
 
+# TODO: Make the standard scaler and encoder take the whole pandas df
+# as an input instead
 class StandardScalerWithNaN(object):
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.copy = copy
@@ -103,7 +105,7 @@ class HomeCreditData(object):
         self.application_encoder = {}
         self.application_scaler = None
 
-        # Load the application data to fit the encoder
+        # Load the application data to fit the encoder and scaler
         self.load_application_data(type='both')
 
     def transform_application_data(self, application_df):
