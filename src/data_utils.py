@@ -16,6 +16,8 @@ from data_globals import APPLICATION_CAT, APPLICATION_CONT
 
 # TODO: Make the standard scaler and encoder take the whole pandas df
 # as an input instead
+# TODO: Add a ZeroOneScaler (brings discrete features into 0-1 range, turn nans
+# into 0)
 class StandardScalerWithNaN(object):
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.copy = copy

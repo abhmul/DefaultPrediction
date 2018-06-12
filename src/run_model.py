@@ -20,6 +20,7 @@ SPLIT_SEED = utils.get_random_seed()
 
 # TODO: Add ROC AUC stateful metric to pyjet so we don't need the validate
 # function and can plot the roc-auc over time
+# TODO: add more logging to these functions s we can see what's going on
 def train_model(model: SLModel,
                 trainset: NpDataset,
                 valset: NpDataset,
