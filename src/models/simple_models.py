@@ -19,6 +19,8 @@ class SimpleModel(SLModel):
             dropout=0.5)
         self.fc2 = FullyConnected(hidden_size, output_size)
 
+        self.add_loss(F.binary_cross_entropy_with_logits)
+
     def forward(self, x):
         x = self.fc1(x)
         self.loss_in = self.fc2(x)

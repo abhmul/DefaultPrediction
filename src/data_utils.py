@@ -9,11 +9,12 @@ from pprint import pprint
 
 import pandas as pd
 import numpy as np
+from pyjet.data import NpDataset
 from sklearn.preprocessing import StandardScaler
 from data_globals import APPLICATION_CAT, APPLICATION_CONT
 
 
-class StandardScalerWithNaN(StandardScaler):
+class StandardScalerWithNaN(object):
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.copy = copy
         self.with_mean = with_mean
@@ -108,15 +109,16 @@ class HomeCreditData(object):
     def transform_application_data(self, application_df):
 
         # Apply standard scalar to all continuous columns
+        logging.info("Transforming continuous features to Standard normal")
         if self.application_scaler is None:
+            logging.info("No Scaler, fitting one.")
             self.application_scaler = StandardScalerWithNaN(
                 copy=False, with_mean=True, with_std=True)
             cont_application_df = application_df[APPLICATION_CONT]
             self.application_scaler.fit(
                 cont_application_df.values.astype(float))
-            application_df[
-                APPLICATION_CONT] = self.application_scaler.transform(
-                    cont_application_df.values)
+        application_df[APPLICATION_CONT] = self.application_scaler.transform(
+                cont_application_df.values)
 
         # Turn the categorical data into one-hot
         for column in APPLICATION_CAT:
@@ -176,4 +178,6 @@ class HomeCreditData(object):
         return ids, data
 
     def load_train(self):
-        data, targets = self.load_application_data(type='train')
+        # TODO: For now just loads the trianing data
+        ids, data, targets = self.load_application_data(type='train')
+        return NpDataset(data.values, y=targets.values, ids=ids.values)

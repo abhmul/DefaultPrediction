@@ -1,13 +1,21 @@
+import logging
+
 from torch.optim import SGD
 from pyjet.models import SLModel
 from pyjet.callbacks import ModelCheckpoint, Plotter
 from pyjet.data import NpDataset
 
+from sklearn.metrics import roc_auc_score
+
 from models import SimpleModel
 import utils
+from data_utils import HomeCreditData
 
 MODEL = SimpleModel
 RUN_ID = "simple"
+SEED = 42
+utils.set_random_seed(SEED)
+SPLIT_SEED = utils.get_random_seed()
 
 
 def train_model(model: SLModel,
@@ -17,7 +25,8 @@ def train_model(model: SLModel,
                 batch_size=32):
 
     # Create the generators
-    traingen = trainset.flow(batch_size=batch_size, shuffle=True)
+    traingen = trainset.flow(
+        batch_size=batch_size, shuffle=True, seed=utils.get_random_seed())
     valgen = valset.flow(batch_size=batch_size, shuffle=False)
 
     # Create the callbacks
@@ -45,7 +54,7 @@ def train_model(model: SLModel,
         nesterov=True)
 
     # Train the model
-    model.fit_generator(
+    logs = model.fit_generator(
         traingen,
         traingen.steps_per_epoch,
         epochs=epochs,
@@ -56,8 +65,23 @@ def train_model(model: SLModel,
         callbacks=callbacks,
         verbose=1)
 
+    return logs
+
+
+def validate_model(model: SLModel, val_data: NpDataset, batch_size=32):
+    valgen = val_data.flow(batch_size=batch_size, shuffle=False)
+    val_preds = model.predict_generator(valgen, valgen.steps_per_epoch)
+    return roc_auc_score(val_data.y, val_preds)
+
+
+def train(data: HomeCreditData):
+    train_data = data.load_train()
+    model = MODEL(input_size=train_data.x.shape[1])
+    train_data, val_data = train_data.validation_split(
+        split=0.1, shuffle=True, stratified=True, seed=SPLIT_SEED)
+    train_model(model, train_data, val_data)
+    # Load the model and score it
+    model = model.load_state(utils.get_model_path(RUN_ID))
+    score = validate_model(model, val_data)
+    logging.info("ROC AUC score of best model is {}".format(score))
     return model
-
-
-def train(data):
-    data.
