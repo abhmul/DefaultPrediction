@@ -114,15 +114,15 @@ class HomeCreditData(object):
 
         # Apply standard scalar to all continuous columns
         logging.info("Transforming continuous features to Standard normal")
+        cont_application_df = application_df[APPLICATION_CONT]
         if self.application_scaler is None:
             logging.info("No Scaler, fitting one.")
             self.application_scaler = StandardScalerWithNaN(
                 copy=False, with_mean=True, with_std=True)
-            cont_application_df = application_df[APPLICATION_CONT]
             self.application_scaler.fit(
                 cont_application_df.values.astype(float))
         application_df[APPLICATION_CONT] = self.application_scaler.transform(
-                cont_application_df.values)
+            cont_application_df.values)
 
         # Turn the categorical data into one-hot
         for column in APPLICATION_CAT:
@@ -184,4 +184,15 @@ class HomeCreditData(object):
     def load_train(self):
         # TODO: For now just loads the trianing data
         ids, data, targets = self.load_application_data(type='train')
-        return NpDataset(data.values, y=targets.values, ids=ids.values)
+        y = targets.values.astype(np.float32)[:, None]
+        return NpDataset(data.values, y=y, ids=ids.values)
+
+    def load_test(self):
+        ids, data = self.load_application_data(type='test')
+        return NpDataset(data.values, ids=ids.values)
+
+    @staticmethod
+    def save_submission(submission_path, predictions, ids):
+        logging.info("Saving submission to {}".format(submission_path))
+        out_df = pd.DataFrame({'SK_ID_CURR': ids, 'TARGET': predictions})
+        out_df.to_csv(submission_path, index=False)

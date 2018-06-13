@@ -1,1 +1,1 @@
-from simple_models import SimpleModel
+from .simple_models import SimpleModel
