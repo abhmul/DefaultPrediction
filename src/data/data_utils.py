@@ -37,38 +37,64 @@ class HomeCreditData(object):
         # Load the application data to fit the encoder and scaler
         self.load_application_data(type='both')
 
-    def transform_application_data(self, application_df):
+    def transform_application_data(self, app_data):
+
+        continuous_names = list(APPLICATION_CONT)
+        discrete_names = list(APPLICATION_DIS)
+        cat_names = list(APPLICATION_CAT)
+        logging.info("Adding new features")
+        # Amount loaned relative to salary
+        app_data['LOAN_INCOME_RATIO'] = app_data['AMT_CREDIT'] / app_data[
+            'AMT_INCOME_TOTAL']
+        app_data['ANNUITY_INCOME_RATIO'] = app_data['AMT_ANNUITY'] / app_data[
+            'AMT_INCOME_TOTAL']
+        continuous_names.extend(['LOAN_INCOME_RATIO', 'ANNUITY_INCOME_RATIO'])
+
+        # Number of overall payments (I think!)
+        app_data['ANNUITY LENGTH'] = app_data['AMT_CREDIT'] / app_data[
+            'AMT_ANNUITY']
+        continuous_names.extend(['ANNUITY LENGTH'])
+
+        # Social features
+        app_data['WORKING_LIFE_RATIO'] = app_data['DAYS_EMPLOYED'] / app_data[
+            'DAYS_BIRTH']
+        app_data['INCOME_PER_FAM'] = app_data['AMT_INCOME_TOTAL'] / app_data[
+            'CNT_FAM_MEMBERS']
+        app_data['CHILDREN_RATIO'] = app_data['CNT_CHILDREN'] / app_data[
+            'CNT_FAM_MEMBERS']
+        continuous_names.extend(
+            ['WORKING_LIFE_RATIO', 'INCOME_PER_FAM', 'CHILDREN_RATIO'])
 
         # Apply standard scalar to all continuous columns
-        logging.info("Transforming continuous features for application_df to "
+        logging.info("Transforming continuous features for app_data to "
                      "Standard normal")
-        cont_application_df = application_df[APPLICATION_CONT]
+        cont_app_data = app_data[continuous_names]
         if self.application_scaler is None:
             logging.info("No Scaler, fitting one.")
             self.application_scaler = StandardScalerWithNaN()
-            self.application_scaler.fit(cont_application_df)
-        application_df[APPLICATION_CONT] = self.application_scaler.transform(
-            cont_application_df)
+            self.application_scaler.fit(cont_app_data)
+        app_data[continuous_names] = self.application_scaler.transform(
+            cont_app_data)
 
         # Turn the categorical data into one-hot
-        logging.info("Transforming categorical features for application_df to "
+        logging.info("Transforming categorical features for app_data to "
                      "OneHot")
-        cat_application_df = application_df[APPLICATION_CAT].fillna("nan")
+        cat_app_data = app_data[cat_names].fillna("nan")
         if self.application_encoder is None:
             logging.info("No encoder, fitting one.")
             self.application_encoder = CategoricalEncoderWithNaN()
-            self.application_encoder.fit(cat_application_df)
-        cat_features = self.application_encoder.transform(cat_application_df)
+            self.application_encoder.fit(cat_app_data)
+        cat_features = self.application_encoder.transform(cat_app_data)
         # Drop the categorical features and add the one-hot features
-        application_df.drop(APPLICATION_CAT, axis=1, inplace=True)
-        application_df[cat_features.columns] = cat_features
+        app_data.drop(cat_names, axis=1, inplace=True)
+        app_data[cat_features.columns] = cat_features
 
         # Fill the discrete nan values with 0
-        logging.info("Transforming nan discreate features for application_df "
+        logging.info("Transforming nan discreate features for app_data "
                      "to 0")
-        application_df[APPLICATION_DIS] = application_df[
-            APPLICATION_DIS].fillna(0)
-        return application_df.astype(np.float32)
+        app_data[discrete_names] = app_data[discrete_names].fillna(0)
+
+        return app_data.astype(np.float32)
 
     def load_application_data(self, type="train"):
         assert type in {"train", "test", "both"}

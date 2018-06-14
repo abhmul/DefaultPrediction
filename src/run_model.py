@@ -8,7 +8,7 @@ from pyjet.data import NpDataset
 
 from sklearn.metrics import roc_auc_score
 
-from models import SimpleModel
+import models
 import utils
 from data import HomeCreditData
 
@@ -21,8 +21,8 @@ parser.add_argument(
 parser.add_argument(
     '--test', action='store_true', help="Runs the script in test mode")
 
-MODEL = SimpleModel
-RUN_ID = "simple"
+MODEL = models.SNNModel
+RUN_ID = "snn"
 SEED = 42
 utils.set_random_seed(SEED)
 SPLIT_SEED = utils.get_random_seed()
