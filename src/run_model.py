@@ -10,7 +10,7 @@ from sklearn.metrics import roc_auc_score
 
 from models import SimpleModel
 import utils
-from data_utils import HomeCreditData
+from data import HomeCreditData
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
